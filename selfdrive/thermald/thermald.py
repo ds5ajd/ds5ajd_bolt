@@ -393,6 +393,16 @@ def thermald_thread(end_event, hw_queue):
       cloudlog.warning(f"shutting device down, offroad since {off_ts}")
       params.put_bool("DoShutdown", True)
 
+    # dp - auto shutdown
+    if off_ts is not None:
+      shutdown_sec = 300
+      sec_now = sec_since_boot() - off_ts
+      if (shutdown_sec - 5) < sec_now:
+        msg.deviceState.chargingDisabled = True
+      if shutdown_sec < sec_now:
+        time.sleep(5)
+        HARDWARE.shutdown()
+
     msg.deviceState.chargingError = current_filter.x > 0. and msg.deviceState.batteryPercent < 90  # if current is positive, then battery is being discharged
     msg.deviceState.started = started_ts is not None
     msg.deviceState.startedMonoTime = int(1e9*(started_ts or 0))
